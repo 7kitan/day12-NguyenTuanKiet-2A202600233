@@ -12,8 +12,6 @@
 # Stop:  docker compose down
 # ============================================================
 
-version: "3.9"
-
 services:
 
   # ──────────────────────────────────────
@@ -23,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime          # chỉ build stage "runtime", không build "builder"
+      target: runtime # chỉ build stage "runtime", không build "builder"
     environment:
       - ENVIRONMENT=staging
       - PORT=8000
@@ -32,15 +30,21 @@ services:
       # ❌ KHÔNG đặt secrets trực tiếp ở đây trong production
       # ✅ Dùng: docker secret hoặc env file ngoài git
     env_file:
-      - .env.local              # secrets riêng, trong .gitignore
+      - .env.local # secrets riêng, trong .gitignore
     depends_on:
       redis:
         condition: service_healthy
       qdrant:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c",
-             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;
+            urllib.request.urlopen('http://localhost:8000/health')",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -87,8 +91,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS (cần cert)
+      - "80:80" # HTTP
+      - "443:443" # HTTPS (cần cert)
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -104,9 +108,9 @@ volumes:
   redis_data:
   qdrant_data:
 
-# ──────────────────────────────────────
-# Network — isolate internal traffic
-# ──────────────────────────────────────
+    # ──────────────────────────────────────
+    # Network — isolate internal traffic
+    # ──────────────────────────────────────
 networks:
   internal:
     driver: bridge

@@ -68,5 +68,14 @@ python app.py
 ## Câu hỏi thảo luận
 
 1. Điều gì xảy ra nếu bạn push code với API key hardcode lên GitHub public?
+- Người đọc repo có thể lấy được API key để dùng hay lạm dụng
 2. Tại sao stateless quan trọng khi scale?
+- Chứa state trong RAM làm tăng tải lên máy chủ. Khi scale lên khiến nhu cầu memory tăng cao.
 3. 12-factor nói "dev/prod parity" — nghĩa là gì trong thực tế?
+- Code của dev và prod deployment giống nhau nhiều nhất có thể
+
+```
+- Make the time gap small: a developer may write code and have it deployed hours or even just minutes later.
+- Make the personnel gap small: developers who wrote code are closely involved in deploying it and watching its behavior in production.
+- Make the tools gap small: keep development and production as similar as possible.
+```

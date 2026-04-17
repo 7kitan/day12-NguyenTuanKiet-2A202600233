@@ -29,11 +29,19 @@ docker build -f 02-docker/develop/Dockerfile -t agent-develop .
 # Xem size
 docker images agent-develop
 
+
+->>
+IMAGE                  ID             DISK USAGE   CONTENT SIZE   EXTRA
+agent-develop:latest   c4cddde9caf9       1.67GB          413MB
+
 # Chạy container
 docker run -p 8000:8000 agent-develop
 
 # Test
 curl http://localhost:8000/health
+
+->> {"status":"ok","uptime_seconds":19.3,"container":true}%                                                                                                         
+
 ```
 
 ---
@@ -76,6 +84,9 @@ docker compose -f 02-docker/production/docker-compose.yml down
 docker images | grep agent
 # agent-basic    ~  800 MB  ← python:3.11 base
 # agent-advanced ~  160 MB  ← python:3.11-slim + multi-stage
+# 
+agent-develop:latest              c4cddde9caf9       1.67GB          413MB   U
+production-agent:latest           27df1f76a2ce        262MB         56.7MB
 ```
 
 ---
@@ -98,6 +109,6 @@ COPY --from=builder ...        # copy chỉ /site-packages
 
 ## Câu hỏi thảo luận
 
-1. Tại sao `COPY requirements.txt .` rồi `RUN pip install` TRƯỚC khi `COPY . .`?
+1. Tại sao `COPY requirements.txt .` rồi `RUN pip install` TRƯỚC khi `COPY . .`? #TODO
 2. `.dockerignore` nên chứa những gì? Tại sao `venv/` và `.env` quan trọng?
 3. Nếu agent cần đọc file từ disk, làm sao mount volume vào container?
