@@ -55,7 +55,7 @@ production-cloud-run/
 
 ---
 
-## Câu hỏi thảo luận
+## Câu hỏi thảo luận #TODO
 
 1. Tại sao serverless (Lambda) không phải lúc nào cũng tốt cho AI agent?
 2. "Cold start" là gì? Ảnh hưởng thế nào đến UX?

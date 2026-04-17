@@ -19,12 +19,13 @@ Test:
          -d '{"question":"hello"}' \\
          http://localhost:8000/ask
 """
+
 import os
 
-
-from fastapi import FastAPI, HTTPException, Security, Depends
-from fastapi.security.api_key import APIKeyHeader
 import uvicorn
+from fastapi import Depends, FastAPI, HTTPException, Security
+from fastapi.security.api_key import APIKeyHeader
+
 from utils.mock_llm import ask
 
 app = FastAPI(title="Agent with API Key Auth")
@@ -58,6 +59,7 @@ def verify_api_key(api_key: str = Security(api_key_header)) -> str:
 # Endpoints
 # ──────────────────────────────────────
 
+
 @app.get("/")
 def root():
     """Public endpoint — không cần auth"""
@@ -85,5 +87,8 @@ def health():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"API Key: {API_KEY}")
-    print(f"Test: curl -H 'X-API-Key: {API_KEY}' http://localhost:{port}/ask?question=hello")
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
+    print(
+        f"Test: curl -H 'X-API-Key: {API_KEY}' http://localhost:{port}/ask?question=hello"
+    )
+
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)

@@ -16,24 +16,27 @@ Demo:
   # Sau đó test multi-turn conversation
   python test_stateless.py
 """
-import os
-import time
+
 import json
 import logging
+import os
+import time
 import uuid
-from datetime import datetime, timezone
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from typing import Optional
 
-
-from fastapi import FastAPI, HTTPException, Header
+import uvicorn
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import uvicorn
+
 from utils.mock_llm import ask
 
 # ── Redis (optional — fallback to in-memory dict nếu không có Redis)
 try:
     import redis
+
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     _redis = redis.from_url(REDIS_URL, decode_responses=True)
     _redis.ping()
@@ -56,6 +59,7 @@ INSTANCE_ID = os.getenv("INSTANCE_ID", f"instance-{uuid.uuid4().hex[:6]}")
 # Session Storage (Redis-backed, Stateless-compatible)
 # ──────────────────────────────────────────────────────────
 
+
 def save_session(session_id: str, data: dict, ttl_seconds: int = 3600):
     """Lưu session vào Redis với TTL."""
     serialized = json.dumps(data)
@@ -77,11 +81,13 @@ def append_to_history(session_id: str, role: str, content: str):
     """Thêm message vào conversation history."""
     session = load_session(session_id)
     history = session.get("history", [])
-    history.append({
-        "role": role,
-        "content": content,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    })
+    history.append(
+        {
+            "role": role,
+            "content": content,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
     # Giữ tối đa 20 messages (10 turns)
     if len(history) > 20:
         history = history[-20:]
@@ -116,14 +122,16 @@ app.add_middleware(
 # Models
 # ──────────────────────────────────────────────────────────
 
+
 class ChatRequest(BaseModel):
     question: str
-    session_id: str | None = None  # None = tạo session mới
+    session_id: Optional[str] = None
 
 
 # ──────────────────────────────────────────────────────────
 # Endpoints
 # ──────────────────────────────────────────────────────────
+
 
 @app.post("/chat")
 async def chat(body: ChatRequest):
@@ -184,6 +192,7 @@ def delete_session(session_id: str):
 # Health / Metrics
 # ──────────────────────────────────────────────────────────
 
+
 @app.get("/health")
 def health():
     redis_ok = False
@@ -213,6 +222,48 @@ def ready():
         except Exception:
             raise HTTPException(503, "Redis not available")
     return {"ready": True, "instance": INSTANCE_ID}
+
+
+@app.post("/ask")
+async def ask_handler(body: ChatRequest):
+    session_id = body.session_id or str(uuid.uuid4())
+
+    session = load_session(session_id)
+    history = session.get("history", [])
+
+    history.append(
+        {
+            "role": "user",
+            "content": body.question,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
+    if len(history) > 20:
+        history = history[-20:]
+
+    answer = ask(body.question)
+
+    history.append(
+        {
+            "role": "assistant",
+            "content": answer,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
+    if len(history) > 20:
+        history = history[-20:]
+
+    save_session(session_id, {"history": history})
+
+    return {
+        "session_id": session_id,
+        "question": body.question,
+        "answer": answer,
+        "storage": "redis" if USE_REDIS else "in-memory",
+        "turns": len([m for m in history if m["role"] == "user"]),
+    }
 
 
 if __name__ == "__main__":

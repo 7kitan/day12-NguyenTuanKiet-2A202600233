@@ -8,8 +8,6 @@
 # bởi instance khác nhau, nhưng session vẫn liên tục vì Redis!
 # ============================================================
 
-version: "3.9"
-
 services:
 
   # ──────────────────────────────────────
@@ -18,7 +16,7 @@ services:
   agent:
     build:
       context: ../..
-      dockerfile: 05-scaling-reliability/advanced/Dockerfile
+      dockerfile: 05-scaling-reliability/production/Dockerfile
     environment:
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=demo
@@ -29,8 +27,14 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c",
-             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request;
+            urllib.request.urlopen('http://localhost:8000/health')",
+        ]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -39,7 +43,7 @@ services:
       - agent_net
     # Không expose port — chỉ access qua nginx
     deploy:
-      replicas: 3           # ← scale to 3 instances
+      replicas: 3 # ← scale to 3 instances
       resources:
         limits:
           cpus: "0.5"

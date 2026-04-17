@@ -24,14 +24,23 @@ pip install -r requirements.txt
 AGENT_API_KEY=my-secret-key python app.py
 
 # Test với key hợp lệ
-curl -H "X-API-Key: my-secret-key" http://localhost:8000/ask \
-     -X POST -H "Content-Type: application/json" \
-     -d '{"question": "hello"}'
+# curl -H "X-API-Key: my-secret-key" http://localhost:8000/ask \
+#      -X POST -H "Content-Type: application/json" \
+#      -d '{"question": "hello"}'
+
+curl -H "X-API-Key: my-secret-key" \
+"http://localhost:8000/ask?question=hello" \
+-X POST
+
+{"question":"hello","answer":"Agent đang hoạt động tốt! (mock response) Hỏi thêm câu hỏi đi nhé."}%             
 
 # Test không có key → 401
 curl http://localhost:8000/ask -X POST \
      -H "Content-Type: application/json" \
      -d '{"question": "hello"}'
+
+{"detail":"Missing API key. Include header: X-API-Key: <your-key>"}%                                                                                            
+
 ```
 
 ---
@@ -54,16 +63,34 @@ cd advanced
 pip install -r requirements.txt
 python app.py
 
+-->
+=== Demo credentials ===
+  student / demo123  (10 req/min, $1/day budget)
+  teacher / teach456 (100 req/min, $1/day budget)
+
+Docs: http://localhost:8000/docs
+
 # Lấy JWT token
 curl -X POST http://localhost:8000/auth/token \
      -H "Content-Type: application/json" \
      -d '{"username": "student", "password": "demo123"}'
+     
+-->
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHVkZW50Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzY0MTk3MjMsImV4cCI6MTc3NjQyMzMyM30.V0TvtK1u21xYyY3COCwlCKlM-CMjmU7C55E6UGYFKMw","token_type":"bearer","expires_in_minutes":60,"hint":"Include in header: Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."}%
+
 
 # Dùng token
-curl -H "Authorization: Bearer <token>" \
+# curl -H "Authorization: Bearer <token>" \
+#      http://localhost:8000/ask \
+#      -X POST -H "Content-Type: application/json" \
+#      -d '{"question": "what is docker?"}'
+     
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHVkZW50Iiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzY0MTk3OTYsImV4cCI6MTc3NjQyMzM5Nn0.dWmvtwtf8BZNuaJqsPhnw5sqZoumHF_VE3WBr4qMyEs" \
      http://localhost:8000/ask \
      -X POST -H "Content-Type: application/json" \
      -d '{"question": "what is docker?"}'
+
+{"question":"what is docker?","answer":"Container là cách đóng gói app để chạy ở mọi nơi. Build once, run anywhere!","usage":{"requests_remaining":9,"budget_remaining_usd":1.9e-05}}%        
 
 # Test rate limit: spam 20 requests liên tiếp
 python test_advanced.py --test rate-limit

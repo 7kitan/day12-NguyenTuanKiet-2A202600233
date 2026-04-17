@@ -28,8 +28,8 @@
 
 ### Exercise 3.1: Railway deployment
 
-- URL: [<https://your-app.railway.app>](https://lab12-railway-production.up.railway.app/)
-- Screenshot: [Link to screenshot in repo]
+- URL: [https://lab12-railway-production.up.railway.app/](https://lab12-railway-production.up.railway.app/)
+- Screenshot: [./screenshots/railway-dashboard.png] [./screenshots/railway-health.png]
 
 ## Part 4: API Security
 

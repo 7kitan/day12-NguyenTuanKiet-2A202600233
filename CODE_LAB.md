@@ -546,13 +546,19 @@ curl http://localhost:8000/ask -X POST \
   -H "Content-Type: application/json" \
   -d '{"question": "Long task"}' &
 
+
+curl -X POST "http://localhost:8000/ask?question=Long%20task" &
+
+{"answer":"Tôi là AI agent được deploy lên cloud. Câu hỏi của bạn đã được nhận."}
+[1]  + 40393 done       curl -X POST "http://localhost:8000/ask?question=Long%20task"
+
 # Ngay lập tức kill
 kill -TERM $PID
 
 # Quan sát: Request có hoàn thành không?
 ```
 
-###  Exercise 5.3: Stateless design
+###  Exercise 5.3: Stateless design #TODO ????
 
 ```bash
 cd ../production
@@ -578,6 +584,11 @@ def ask(user_id: str, question: str):
 def ask(user_id: str, question: str):
     history = r.lrange(f"history:{user_id}", 0, -1)
     # ...
+    # 
+    # 
+    # 
+
+
 ```
 
 Tại sao? Vì khi scale ra nhiều instances, mỗi instance có memory riêng.
@@ -595,14 +606,35 @@ Quan sát:
 - Nginx phân tán requests
 - Nếu 1 instance die, traffic chuyển sang instances khác
 
+✔ Container production-agent-3  Created                                                                               0.1s
+ ✔ Container production-agent-1  Created                                                                               0.1s
+ ✔ Container production-agent-2  Created                                                                               0.1s
+ 
+ agent-2  | INFO:     127.0.0.1:42902 - "GET /health HTTP/1.1" 200 OK
+ agent-3  | INFO:     127.0.0.1:42918 - "GET /health HTTP/1.1" 200 OK
+ agent-1  | INFO:     127.0.0.1:42932 - "GET /health HTTP/1.1" 200 OK
+ agent-3  | INFO:     127.0.0.1:35736 - "GET /health HTTP/1.1" 200 OK
+ agent-2  | INFO:     127.0.0.1:35742 - "GET /health HTTP/1.1" 200 OK
+ agent-1  | INFO:     127.0.0.1:35758 - "GET /health HTTP/1.1" 200 OK
+ agent-1  | INFO:     127.0.0.1:57438 - "GET /health HTTP/1.1" 200 OK
+ agent-3  | INFO:     127.0.0.1:57450 - "GET /health HTTP/1.1" 200 OK
+ agent-2  | INFO:     127.0.0.1:57462 - "GET /health HTTP/1.1" 200 OK
+ 
+
 Test:
 ```bash
 # Gọi 10 requests
+# for i in {1..10}; do
+#   curl http://localhost/ask -X POST \
+#     -H "Content-Type: application/json" \
+#     -d '{"question": "Request '$i'"}'
+# done
 for i in {1..10}; do
-  curl http://localhost/ask -X POST \
+  curl http://localhost:8000/ask -X POST \
     -H "Content-Type: application/json" \
-    -d '{"question": "Request '$i'"}'
+    -d "{\"question\": \"Request $i\"}"
 done
+```
 
 # Check logs — requests được phân tán
 docker compose logs agent
