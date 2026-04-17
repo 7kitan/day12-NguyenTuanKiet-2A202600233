@@ -1,0 +1,10 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.env
+.DS_Store
+*.md
+Dockerfile
+docker-compose.yml
+my-production-agent
